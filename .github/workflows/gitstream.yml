@@ -1,0 +1,12 @@
+name: gitStream
+
+on:
+  pull_request:
+
+jobs:
+  gitstream:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: linear-b/gitstream-github-action@v1

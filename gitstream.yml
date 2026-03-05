@@ -1,9 +1,30 @@
 version: 1
+
 automations:
-  pr_review:
+
+  comment_on_pr:
     if:
       - true
     run:
       - action: comment
         args:
-          comment: "GitStream is running"
+          comment: |
+            👋 GitStream is active for this Pull Request.
+
+  label_small_pr:
+    if:
+      - {{ files.changed < 10 }}
+    run:
+      - action: add-label
+        args:
+          label: small-pr
+
+  warn_large_pr:
+    if:
+      - {{ files.changed > 200 }}
+    run:
+      - action: comment
+        args:
+          comment: |
+            ⚠️ This PR is large (>200 files changed).
+            Consider splitting it into smaller PRs.

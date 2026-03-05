@@ -5,7 +5,7 @@ manifest:
 automations:
   linearb_ai_codereview:
     # Ai Code Review - Triggers only when PR is ready for review, see docs https://docs.gitstream.cm/execution-model/#action-level-execution-control
-    on: [pr_created, merge]
+    on: [pr_created, pr_ready_for_review, merge]
     if:
       - {{ not is.bot }}
     run:
@@ -97,4 +97,3 @@ colors:
   red:    'b60205'
   yellow: 'fbca04'
   green:  '0e8a16'
-

@@ -1,0 +1,9 @@
+version: 1
+automations:
+  pr_review:
+    if:
+      - true
+    run:
+      - action: comment
+        args:
+          comment: "GitStream is running"

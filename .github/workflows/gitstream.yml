@@ -2,9 +2,6 @@ name: gitstream
 
 on:
   pull_request:
-  push:
-    branches:
-      - main
 
 jobs:
   gitstream:
@@ -18,3 +15,5 @@ jobs:
           full_repository: ${{ github.repository }}
           head_ref: ${{ github.head_ref }}
           base_ref: ${{ github.base_ref }}
+          resolver_url: https://resolver.gitstream.cm
+          resolver_token: ${{ secrets.GITSTREAM_TOKEN }}

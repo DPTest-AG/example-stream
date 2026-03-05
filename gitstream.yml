@@ -13,7 +13,7 @@ automations:
 
   label_small_pr:
     if:
-      - {{ files.changed < 10 }}
+      - files.changed < 10
     run:
       - action: add-label
         args:
@@ -21,7 +21,7 @@ automations:
 
   warn_large_pr:
     if:
-      - {{ files.changed > 200 }}
+      - files.changed > 200
     run:
       - action: comment
         args:

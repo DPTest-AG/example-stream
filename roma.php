@@ -1,6 +1,6 @@
 <?php
 
-conset ORI = ["Desktop", "Landscape", "Portrait"];
+const ORI = ["Desktop", "Landscape", "Portrait"];
 const MAP_KEYS = [
     'slot' => 'Slot',
     'web_total_count' => 'Web Total',

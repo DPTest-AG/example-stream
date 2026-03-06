@@ -1,99 +1,96 @@
 # -*- mode: yaml -*-
+# +----------------------------------------------------------------------------+
+# | /:\ gitStream: Workflow automation for the code review process.            |
+# +----------------------------------------------------------------------------+
+# | This file contains one or more /:\ gitStream automations:                  |
+# | https:// docs.gitstream.cm                                                 |
+# |                                                                            |
+# | gitStream uses YAML syntax with nunjucks templating via Jinja 2.           |
+# |                                                                            |
+# | Automations follow an "if this, then that" execution format.               |
+# | More info here: https://docs.gitstream.cm/how-it-works/                    |
+# |                                                                            |
+# +----------------------------------------------------------------------------+
+
+# /:\ gitStream Reference Docs: 
+#    Context Variables: https://docs.gitstream.cm/context-variables/
+#    Filter Functions: https://docs.gitstream.cm/filter-functions/
+#    Automation Actions: https://docs.gitstream.cm/automation-actions/
+
 manifest:
   version: 1.0
 
+# +----------------------------------------------------------------------------+
+# | Automations
+# +----------------------------------------------------------------------------+
+
 automations:
-  linearb_ai_codereview:
-    # Ai Code Review - Triggers only when PR is ready for review, see docs https://docs.gitstream.cm/execution-model/#action-level-execution-control
-    on: [pr_created, pr_ready_for_review, merge]
+  # Apply color coded labels to PRs based on the estimated time to review.
+  # https://docs.gitstream.cm/automations/provide-estimated-time-to-review/
+  estimated_time_to_review:
     if:
-      - {{ not is.bot }}
+      - true
     run:
-      - action: code-review@v1
-        args:
-          guidelines: |
-            - Keep suggestions short and actionable.
-
-  pr_policy_low_noise:
-    on: [pr_created, commit]
-    if:
-      - {{ not pr.draft }}
-      - {{ not is.bot }}
-    run:
-      # AI description (updates PR body; not a comment)
-      - action: describe-changes@v1
-        args:
-          concat_mode: append
-
-      # Quiet labels
       - action: add-label@v1
         args:
           label: "{{ calc.etr }} min review"
-          color: {{ colors.red if (calc.etr >= 20) else (colors.yellow if (calc.etr >= 5) else colors.green) }}
-
-      # Assign reviewers silently
-      - action: add-reviewers@v1
-        args:
-          reviewers: {{ who.experts }}
-
-      # ONE consolidated, updatable comment
-      - action: add-comment@v1
-        args:
-          comment: |
-            ## gitStream Summary — Low Noise (Staff Engineer focus)
-
-            **AI PR Description:** Updated in the PR body above.
-            **ETR:** {{ calc.etr }} min review
-            **Unresolved threads:** {{ pr.unresolved_threads | default(value=0) }}
-
-            ### Suggested Reviewers (auto-assigned)
-            {{ who.experts }}
-
-            ### Jira Reference
-            {{ '✅ Found in title/description.' if (has.jira_ticket_in_title or has.jira_ticket_in_desc) else '⚠️ Missing Jira ticket. Please add one (e.g., `ABC-123` or an `atlassian.net/browse/...` link).' }}
-
-            > Labels/reviewers were applied quietly to keep this PR clean.
-
-  pr_policy_unresolved_threads:
-    on: [pr_created, commit]
+          color: {{ colors.red if (calc.etr >= 20) else ( colors.yellow if (calc.etr >= 5) else colors.green ) }}
+  
+  # Flag PRs that are missing a Jira ticket reference in the title or description.
+  # https://docs.gitstream.cm/integrations/jira/
+  label_missing_jira_info:
     if:
-      - {{ not pr.draft }}
-      - {{ not is.bot }}
-      - {{ pr.unresolved_threads }}
-    run:
-      - action: add-label@v1
-        args:
-          label: "{{ pr.unresolved_threads | default(value=0) }} unresolved thread(s)"
-          color: {{ colors.yellow }}
-
-  pr_policy_missing_jira:
-    on: [pr_created, commit]
-    if:
-      - {{ not pr.draft }}
-      - {{ not is.bot }}
       - {{ not (has.jira_ticket_in_title or has.jira_ticket_in_desc) }}
     run:
       - action: add-label@v1
         args:
           label: "missing-jira"
           color: {{ colors.red }}
-          # further automations available with Jira webhook
+  
+  # Flag PRs that have unresolved comment threads.
+  # https://docs.gitstream.cm/automations/standard/label-management/label-unresolved-threads/
+  label_unresolved_threads:  
+    if:
+      - {{ pr.status == 'open' }}
+      - {{ pr.unresolved_threads > 0 }}
+    run:
+      - action: add-label@v1
+        args:
+          label: 🚨 {{ pr.unresolved_threads }} Unresolved Thread(s)
+          color: {{ colors.yellow }}  
+  
+  # Flag PRs that delete files to highlight potential refactors that need extra scrutiny.
+  # https://docs.gitstream.cm/automations/label-deleted-files/
+  flag_deleted_files:
+    if:
+      - {{ has.deleted_files }}
+    run: 
+      - action: add-label@v1
+        args:
+          label: 🗑️ Deleted files
+          color: {{ colors.orange }}
 
-# ----------------- config -----------------
+
+# +----------------------------------------------------------------------------+
+# | Custom Expressions                                                         |
+# | https://docs.gitstream.cm/how-it-works/#custom-expressions                 |
+# +----------------------------------------------------------------------------+
+
+# https://docs.gitstream.cm/filter-functions/#estimatedreviewtime
 calc:
   etr: {{ branch | estimatedReviewTime }}
 
 has:
-  jira_ticket_in_title: {{ pr.title       | includes(regex=r/\b[A-Za-z][A-Za-z0-9_]+-\d+\b/) }}
-  jira_ticket_in_desc:  {{ pr.description | includes(regex=r/\b[A-Za-z][A-Za-z0-9_]+-\d+\b/) }}
+  jira_ticket_in_title: {{ pr.title | includes(regex=r/\b[A-Za-z]+-\d+\b/) }}
+  jira_ticket_in_desc: {{ pr.description | includes(regex=r/atlassian.net\/browse\/\w{1,}-\d{3,4}/) }}
+  deleted_files: {{ source.diff.files | map(attr='new_file') | match(term='/dev/null') | some }}
 
-who:
-  experts: {{ repo | codeExperts(gt=10) }}
 
-is:
-  bot: {{ pr.author | match(list=['github-actions','_bot_','[bot]','dependabot','gitstream-cm','prvalidation','aida-bot']) | some }}
-
+# These are all of the colors in GitHub's default label color palette.
 colors:
-  red:    'b60205'
+  red: 'b60205'
+  orange: 'd93f0b'
   yellow: 'fbca04'
-  green:  '0e8a16'
+  green: '0e8a16'
+  blue: '1d76db'
+  purple: '5319e7'

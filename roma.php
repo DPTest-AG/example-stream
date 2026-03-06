@@ -307,7 +307,7 @@ class Analyzer {
                 continue;
             }
 
-            if (@!$this->totals[$key]) {
+            if (!isset($this->totals[$key])) {
                 $this->totals[$key] = new SlotTotal();
                 $this->totals[$key]->slot = $key;
             }

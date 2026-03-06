@@ -5,7 +5,6 @@ run-name: |
   /:\ gitStream: PR #${{ fromJSON(fromJSON(github.event.inputs.client_payload)).pullRequestNumber }} from ${{ github.event.inputs.full_repository }}
 
 on:
-  pull_request:
   workflow_dispatch:
     inputs:
       client_payload:

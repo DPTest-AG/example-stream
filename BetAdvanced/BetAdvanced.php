@@ -272,7 +272,7 @@ if ($game->LaunchId == 'football_mobile_html') {continue;}
 
     private static function getLanguage() {
         $language = 'tr';
-        switch ($_COOKIE['language']) {
+        switch ($_COOKIE['language'] ?? 'tr_TR') {
             case 'tr_TR':
                 $language = 'tr';
                 break;

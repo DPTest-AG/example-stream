@@ -26,7 +26,7 @@ claswtal {
     public $both_outstanding_count = 0;
 }
  
-class SlotByDate {
+class SlotByDate 
     public $slot;
     public $web_completed_count = 0;
     public $mobi_completed_count = 0;

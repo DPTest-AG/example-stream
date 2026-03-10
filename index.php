@@ -13,13 +13,13 @@ const MAP_KEYS = [
     'both_completed_count' => 'Completed',
     'both_outstanding_count' => 'Outstanding',
 ];
-class SlotTotal {
+claswtal {
     public $slot;
     public $web_total_count = 0;
     public $web_completed_count = 0;
     public $web_outstanding_count = 0;
     public $mobi_total_count = 0;
-    public $mobi_completed_count = 0;
+    publimobi_completed_count = 0;
     public $mobi_outstanding_count = 0;
     public $both_total_count = 0;
     public $both_completed_count = 0;
